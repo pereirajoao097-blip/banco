@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aura Bank - Seu Banco Digital</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+              950: '#2e1065',
+            },
+            dark: {
+              bg: '#08090d',
+              card: '#12141d',
+              cardHover: '#181b27',
+              border: '#232738',
+              input: '#1a1d2b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Direct CSS Fallbacks so the mobile viewer always renders correctly even without CDN */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #08090d;
+      color: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+    }
+
+    @media (min-width: 640px) {
+      body {
+        padding: 24px;
+      }
+    }
+
+    /* Custom Glassmorphism Card Style */
+    .glass-card {
+      background-color: #12141d;
+      background: rgba(18, 20, 29, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+    }
+
+    .glass-modal {
+      background: rgba(8, 9, 13, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #08090d;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #232738;
+      border-radius: 9999px;
+    }
+
+    /* Input Pin styling */
+    .pin-input {
+      letter-spacing: 0.5em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="selection:bg-brand-600 selection:text-white antialiased">
+
+  <!-- Toast Notification Bar -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px] w-11/12 max-w-md">
+    <div id="toast-body" class="flex items-center gap-3 p-4 rounded-2xl shadow-2xl text-sm font-semibold border glass-card">
+      <div id="toast-icon-bg" class="p-2 rounded-xl flex items-center justify-center bg-emerald-500/20 text-emerald-400">
+        <svg id="toast-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <span id="toast-message" class="flex-1 text-gray-100">Notificação</span>
+      <button onclick="hideToast()" class="text-gray-400 hover:text-white transition p-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- App Main Wrapper -->
+  <main class="w-full max-w-md my-auto flex flex-col gap-4 sm:gap-5 py-2">
+
+    <!-- Header Section -->
+    <header class="flex items-center justify-between glass-card p-4 rounded-2xl border border-dark-border">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div id="user-avatar" class="w-11 h-11 rounded-full bg-gradient-to-tr from-brand-700 to-brand-500 flex items-center justify-center font-bold text-lg text-white shadow-md shadow-brand-900/40">
+            U
+          </div>
+          <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-dark-bg rounded-full"></span>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400 font-medium">Bem-vindo(a) ao Aura</p>
+          <div class="flex items-center gap-1.5 cursor-pointer group" onclick="openProfileModal()">
+            <h1 id="user-greeting" class="text-base font-bold text-white group-hover:text-brand-400 transition">Olá, Usuário</h1>
+            <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-brand-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleBalanceVisibility()" title="Esconder/Mostrar Saldo" class="p-2.5 rounded-xl bg-dark-input hover:bg-dark-border text-gray-300 hover:text-white transition active:scale-95 border border-dark-border">
+          <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+        </button>
+        <button onclick="openProfileModal()" title="Configurações do Perfil" class="p-2.5 rounded-xl bg-dark-input hover:bg-dark-border text-gray-300 hover:text-white transition active:scale-95 border border-dark-border">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Balance Card -->
+    <section class="glass-card p-5 sm:p-6 rounded-3xl border border-dark-border relative overflow-hidden bg-gradient-to-br from-dark-card via-dark-card to-brand-950/30 shadow-2xl">
+      <!-- Background Ambient Glow -->
+      <div class="absolute -right-12 -top-12 w-40 h-40 bg-brand-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Saldo disponível
+        </span>
+        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20">
+          Conta Corrente
+        </span>
+      </div>
+
+      <div class="my-3 min-h-[44px] flex items-center">
+        <h2 id="balance-display" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white transition-all duration-300">
+          R$ 0,00
+        </h2>
+      </div>
+
+      <p class="text-xs text-gray-400 mb-6 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        Ambiente seguro • Protegido por PIN (2706)
+      </p>
+
+      <!-- Main Action Buttons -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="openDepositModal()" class="flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold shadow-lg shadow-brand-700/25 active:scale-[0.98] transition-all duration-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+          + Depositar
+        </button>
+        <button onclick="openWithdrawModal()" class="flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-dark-input hover:bg-dark-border border border-dark-border text-gray-100 font-semibold active:scale-[0.98] transition-all duration-200">
+          <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+          - Retirar
+        </button>
+      </div>
+    </section>
+
+    <!-- Quick Stats Summary -->
+    <section class="grid grid-cols-2 gap-3">
+      <div class="glass-card p-3.5 rounded-2xl border border-dark-border flex items-center gap-3">
+        <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+        </div>
+        <div>
+          <span class="text-[11px] text-gray-400 font-medium block">Total Entradas</span>
+          <span id="stat-deposits" class="text-sm font-bold text-gray-100">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="glass-card p-3.5 rounded-2xl border border-dark-border flex items-center gap-3">
+        <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+        </div>
+        <div>
+          <span class="text-[11px] text-gray-400 font-medium block">Total Saídas</span>
+          <span id="stat-withdrawals" class="text-sm font-bold text-gray-100">R$ 0,00</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transactions History Section -->
+    <section class="glass-card p-5 rounded-3xl border border-dark-border flex flex-col min-h-[220px]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Movimentações
+        </h3>
+        <span id="tx-count" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-dark-input text-gray-400 border border-dark-border">
+          0 registros
+        </span>
+      </div>
+
+      <!-- Transactions List container -->
+      <div id="transactions-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- App Footer -->
+    <footer class="text-center text-xs text-gray-500 py-1">
+      <p>Aura Digital Bank • Demonstração e Simulação</p>
+      <p class="text-[10px] text-gray-600 mt-0.5">Sem valor monetário real</p>
+    </footer>
+
+  </main>
+
+
+  <!-- ==================== MODALS SECTION ==================== -->
+
+  <!-- 1. PROFILE / NAME REGISTER MODAL -->
+  <div id="profile-modal" class="fixed inset-0 z-50 glass-modal flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-card border border-dark-border w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-all duration-300" id="profile-modal-content">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-brand-500/10 text-brand-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          </div>
+          <h3 class="text-lg font-bold text-white">Perfil do Usuário</h3>
+        </div>
+        <button onclick="closeModal('profile-modal')" class="p-1.5 rounded-xl hover:bg-dark-border text-gray-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <form onsubmit="saveProfileName(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1.5">Seu Nome Completo ou Preferido</label>
+          <input type="text" id="input-profile-name" required placeholder="Ex: João Silva" maxlength="25" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 transition text-sm">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition active:scale-[0.98] shadow-lg shadow-brand-700/30">
+            Salvar Nome
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-dark-border flex justify-between items-center text-xs">
+        <span class="text-gray-400">Resetar dados da conta</span>
+        <button type="button" onclick="confirmResetData()" class="text-rose-400 hover:text-rose-300 font-medium hover:underline">
+          Limpar Tudo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. DEPOSIT MODAL -->
+  <div id="deposit-modal" class="fixed inset-0 z-50 glass-modal flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-card border border-dark-border w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-all duration-300" id="deposit-modal-content">
+      
+      <!-- Step 1: Amount Input -->
+      <div id="deposit-step-1">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Novo Depósito</h3>
+          </div>
+          <button onclick="closeModal('deposit-modal')" class="p-1.5 rounded-xl hover:bg-dark-border text-gray-400 hover:text-white transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-400 mb-4">Quanto você deseja depositar na sua conta?</p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1.5">Valor do depósito</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-400 font-bold text-lg">R$</span>
+              <input type="number" id="deposit-amount" step="0.01" min="0.01" placeholder="0,00" class="w-full bg-dark-input border border-dark-border rounded-xl pl-12 pr-4 py-3.5 text-white font-bold text-lg placeholder-gray-600 focus:outline-none focus:border-brand-500 transition">
+            </div>
+          </div>
+
+          <!-- Quick Value Chips -->
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" onclick="setPresetAmount('deposit-amount', 20)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              +R$ 20
+            </button>
+            <button type="button" onclick="setPresetAmount('deposit-amount', 50)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              +R$ 50
+            </button>
+            <button type="button" onclick="setPresetAmount('deposit-amount', 100)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              +R$ 100
+            </button>
+            <button type="button" onclick="setPresetAmount('deposit-amount', 500)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              +R$ 500
+            </button>
+          </div>
+
+          <div class="pt-3">
+            <button onclick="goToDepositPinStep()" class="w-full py-3.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition active:scale-[0.98] shadow-lg shadow-brand-700/30 flex items-center justify-center gap-2">
+              Continuar
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Password Verification -->
+      <div id="deposit-step-2" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="backToDepositStep1()" class="p-1.5 rounded-xl hover:bg-dark-border text-gray-400 hover:text-white transition flex items-center gap-1 text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Voltar
+          </button>
+          <span class="text-xs text-gray-400 font-semibold">Segurança</span>
+        </div>
+
+        <div class="text-center my-4">
+          <div class="w-12 h-12 rounded-full bg-brand-600/20 text-brand-400 border border-brand-500/30 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+          <h4 class="text-base font-bold text-white">Confirme sua senha</h4>
+          <p class="text-xs text-gray-400 mt-1">Informe a senha de 4 dígitos para autorizar o depósito de <span id="deposit-confirm-val" class="text-brand-300 font-bold">R$ 0,00</span>.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <input type="password" id="deposit-pin" maxlength="4" placeholder="••••" class="w-full text-center bg-dark-input border border-dark-border rounded-xl py-3.5 text-2xl font-mono tracking-[0.5em] text-white focus:outline-none focus:border-brand-500 transition pin-input">
+          </div>
+
+          <button onclick="executeDeposit()" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition active:scale-[0.98] shadow-lg shadow-emerald-700/30 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Confirmar Depósito
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3. WITHDRAW MODAL -->
+  <div id="withdraw-modal" class="fixed inset-0 z-50 glass-modal flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-card border border-dark-border w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-all duration-300" id="withdraw-modal-content">
+      
+      <!-- Step 1: Amount Input -->
+      <div id="withdraw-step-1">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Nova Retirada</h3>
+          </div>
+          <button onclick="closeModal('withdraw-modal')" class="p-1.5 rounded-xl hover:bg-dark-border text-gray-400 hover:text-white transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-400 mb-1">Quanto você deseja retirar?</p>
+        <p class="text-xs text-brand-400 font-medium mb-4 flex items-center gap-1">
+          <span>Saldo disponível:</span>
+          <span id="withdraw-available-balance" class="font-bold">R$ 0,00</span>
+        </p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1.5">Valor da retirada</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 font-bold text-lg">R$</span>
+              <input type="number" id="withdraw-amount" step="0.01" min="0.01" placeholder="0,00" class="w-full bg-dark-input border border-dark-border rounded-xl pl-12 pr-4 py-3.5 text-white font-bold text-lg placeholder-gray-600 focus:outline-none focus:border-brand-500 transition">
+            </div>
+          </div>
+
+          <!-- Quick Value Chips -->
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="setPresetAmount('withdraw-amount', 50)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              R$ 50
+            </button>
+            <button type="button" onclick="setPresetAmount('withdraw-amount', 100)" class="py-1.5 rounded-lg bg-dark-input border border-dark-border text-xs font-medium text-gray-300 hover:bg-brand-600/20 hover:border-brand-500 transition">
+              R$ 100
+            </button>
+            <button type="button" onclick="setMaxWithdrawAmount()" class="py-1.5 rounded-lg bg-brand-600/20 border border-brand-500/30 text-xs font-semibold text-brand-300 hover:bg-brand-600/30 transition">
+              Valor Total
+            </button>
+          </div>
+
+          <div class="pt-3">
+            <button onclick="goToWithdrawPinStep()" class="w-full py-3.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition active:scale-[0.98] shadow-lg shadow-brand-700/30 flex items-center justify-center gap-2">
+              Continuar
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Password Verification -->
+      <div id="withdraw-step-2" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="backToWithdrawStep1()" class="p-1.5 rounded-xl hover:bg-dark-border text-gray-400 hover:text-white transition flex items-center gap-1 text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Voltar
+          </button>
+          <span class="text-xs text-gray-400 font-semibold">Segurança</span>
+        </div>
+
+        <div class="text-center my-4">
+          <div class="w-12 h-12 rounded-full bg-brand-600/20 text-brand-400 border border-brand-500/30 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </div>
+          <h4 class="text-base font-bold text-white">Confirme sua senha</h4>
+          <p class="text-xs text-gray-400 mt-1">Informe a senha de 4 dígitos para autorizar o saque de <span id="withdraw-confirm-val" class="text-brand-300 font-bold">R$ 0,00</span>.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <input type="password" id="withdraw-pin" maxlength="4" placeholder="••••" class="w-full text-center bg-dark-input border border-dark-border rounded-xl py-3.5 text-2xl font-mono tracking-[0.5em] text-white focus:outline-none focus:border-brand-500 transition pin-input">
+          </div>
+
+          <button onclick="executeWithdraw()" class="w-full py-3.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition active:scale-[0.98] shadow-lg shadow-purple-700/30 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Confirmar Retirada
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+    /* ==========================================================================
+       APP STATE & LOCAL STORAGE KEYS
+       ========================================================================== */
+    const STORAGE_KEYS = {
+      NAME: 'aura_user_name',
+      BALANCE: 'aura_user_balance',
+      HISTORY: 'aura_user_history'
+    };
+
+    const CORRECT_PIN = "2706";
+
+    let state = {
+      userName: '',
+      balance: 0.00,
+      history: [],
+      isBalanceVisible: true
+    };
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDataFromStorage();
+      renderApp();
+    });
+
+    /**
+     * Load data from localStorage or set defaults
+     */
+    function loadDataFromStorage() {
+      // 1. User Name
+      const savedName = localStorage.getItem(STORAGE_KEYS.NAME);
+      if (savedName && savedName.trim() !== '') {
+        state.userName = savedName;
+      } else {
+        state.userName = '';
+      }
+
+      // 2. Balance (Initial mandatory value is R$ 0,00)
+      const savedBalance = localStorage.getItem(STORAGE_KEYS.BALANCE);
+      if (savedBalance !== null) {
+        state.balance = parseFloat(savedBalance) || 0.00;
+      } else {
+        state.balance = 0.00;
+      }
+
+      // 3. Transactions History
+      const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      if (savedHistory !== null) {
+        try {
+          state.history = JSON.parse(savedHistory);
+        } catch (e) {
+          state.history = [];
+        }
+      } else {
+        state.history = [];
+      }
+    }
+
+    /**
+     * Save current state to localStorage
+     */
+    function saveState() {
+      localStorage.setItem(STORAGE_KEYS.NAME, state.userName);
+      localStorage.setItem(STORAGE_KEYS.BALANCE, state.balance.toString());
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
+    }
+
+    /* ==========================================================================
+       UI RENDERING FUNCTIONS
+       ========================================================================== */
+    function renderApp() {
+      renderGreeting();
+      renderBalance();
+      renderStats();
+      renderHistory();
+    }
+
+    function renderGreeting() {
+      const greetingEl = document.getElementById('user-greeting');
+      const avatarEl = document.getElementById('user-avatar');
+
+      if (!state.userName || state.userName.trim() === '') {
+        greetingEl.innerText = 'Cadastrar seu nome';
+        avatarEl.innerText = '?';
+      } else {
+        greetingEl.innerText = `Olá, ${state.userName}`;
+        const initial = state.userName.trim().charAt(0).toUpperCase();
+        avatarEl.innerText = initial || 'U';
+      }
+    }
+
+    function renderBalance() {
+      const displayEl = document.getElementById('balance-display');
+      if (state.isBalanceVisible) {
+        displayEl.innerText = formatBRL(state.balance);
+      } else {
+        displayEl.innerText = '••••••••';
+      }
+    }
+
+    function renderStats() {
+      let totalDeposits = 0;
+      let totalWithdrawals = 0;
+
+      state.history.forEach(item => {
+        if (item.type === 'Depósito') {
+          totalDeposits += item.amount;
+        } else if (item.type === 'Retirada') {
+          totalWithdrawals += item.amount;
+        }
+      });
+
+      document.getElementById('stat-deposits').innerText = formatBRL(totalDeposits);
+      document.getElementById('stat-withdrawals').innerText = formatBRL(totalWithdrawals);
+    }
+
+    function renderHistory() {
+      const listContainer = document.getElementById('transactions-list');
+      const countEl = document.getElementById('tx-count');
+
+      countEl.innerText = `${state.history.length} ${state.history.length === 1 ? 'registro' : 'registros'}`;
+
+      if (!state.history || state.history.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-8 text-gray-500">
+            <svg class="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+            <p class="text-xs font-medium">Nenhuma movimentação ainda.</p>
+            <p class="text-[11px] text-gray-600 mt-0.5">Seus depósitos e retiradas aparecerão aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      // Show newest transactions first
+      const sortedHistory = [...state.history].reverse();
+
+      sortedHistory.forEach(item => {
+        const isDeposit = item.type === 'Depósito';
+        const iconSvg = isDeposit 
+          ? `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>`
+          : `<svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>`;
+        
+        const iconBgClass = isDeposit ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-purple-500/10 border-purple-500/20';
+        const amountSign = isDeposit ? '+' : '-';
+        const amountClass = isDeposit ? 'text-emerald-400' : 'text-gray-200';
+
+        html += `
+          <div class="flex items-center justify-between p-3 rounded-2xl bg-dark-input/60 hover:bg-dark-input border border-dark-border/60 transition">
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 rounded-xl border ${iconBgClass}">
+                ${iconSvg}
+              </div>
+              <div>
+                <span class="text-xs font-bold text-gray-200 block">${item.type}</span>
+                <span class="text-[10px] text-gray-400">${item.formattedDate}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-extrabold ${amountClass} block tracking-tight">
+                ${amountSign} ${formatBRL(item.amount)}
+              </span>
+              <span class="text-[9px] text-gray-500 font-mono">Concluído</span>
+            </div>
+          </div>
+        `;
+      });
+
+      listContainer.innerHTML = html;
+    }
+
+    /* ==========================================================================
+       HELPER UTILITIES
+       ========================================================================== */
+    function formatBRL(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value);
+    }
+
+    function toggleBalanceVisibility() {
+      state.isBalanceVisible = !state.isBalanceVisible;
+      const eyeIcon = document.getElementById('eye-icon');
+      if (state.isBalanceVisible) {
+        eyeIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        `;
+      } else {
+        eyeIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a8.995 8.995 0 012.122-.163c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21M3 3l18 18"></path>
+        `;
+      }
+      renderBalance();
+    }
+
+    function getCurrentFormattedDate() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+
+      return `Hoje, ${hours}:${minutes} (${day}/${month})`;
+    }
+
+    /* ==========================================================================
+       TOAST NOTIFICATIONS
+       ========================================================================== */
+    let toastTimeout;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastBody = document.getElementById('toast-body');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastIconBg = document.getElementById('toast-icon-bg');
+      const toastMsg = document.getElementById('toast-message');
+
+      clearTimeout(toastTimeout);
+      toastMsg.innerText = message;
+
+      if (type === 'success') {
+        toastBody.className = "flex items-center gap-3 p-4 rounded-2xl shadow-2xl text-sm font-semibold border bg-dark-card border-emerald-500/40 text-emerald-300";
+        toastIconBg.className = "p-2 rounded-xl bg-emerald-500/20 text-emerald-400";
+        toastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
+      } else {
+        toastBody.className = "flex items-center gap-3 p-4 rounded-2xl shadow-2xl text-sm font-semibold border bg-dark-card border-rose-500/40 text-rose-300";
+        toastIconBg.className = "p-2 rounded-xl bg-rose-500/20 text-rose-400";
+        toastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
+      }
+
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 4000);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+    }
+
+    /* ==========================================================================
+       MODAL HANDLING
+       ========================================================================== */
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      const content = document.getElementById(`${modalId}-content`);
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.classList.add('opacity-100');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      const content = document.getElementById(`${modalId}-content`);
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      modal.classList.remove('opacity-100');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    /* ==========================================================================
+       PROFILE / NAME LOGIC
+       ========================================================================== */
+    function openProfileModal() {
+      document.getElementById('input-profile-name').value = state.userName;
+      openModal('profile-modal');
+    }
+
+    function saveProfileName(e) {
+      e.preventDefault();
+      const input = document.getElementById('input-profile-name');
+      const val = input.value.trim();
+
+      if (!val) {
+        showToast("Por favor, digite um nome válido.", "error");
+        return;
+      }
+
+      state.userName = val;
+      saveState();
+      renderGreeting();
+      closeModal('profile-modal');
+      showToast(`Nome salvo com sucesso! Olá, ${state.userName}`);
+    }
+
+    function confirmResetData() {
+      state.userName = '';
+      state.balance = 0.00;
+      state.history = [];
+      saveState();
+      renderApp();
+      closeModal('profile-modal');
+      showToast("Sua conta foi redefinida para os valores iniciais.", "success");
+    }
+
+    /* ==========================================================================
+       DEPOSIT SYSTEM LOGIC
+       ========================================================================== */
+    function openDepositModal() {
+      document.getElementById('deposit-amount').value = '';
+      document.getElementById('deposit-pin').value = '';
+      backToDepositStep1();
+      openModal('deposit-modal');
+    }
+
+    function setPresetAmount(inputId, amount) {
+      document.getElementById(inputId).value = amount;
+    }
+
+    function goToDepositPinStep() {
+      const amountInput = document.getElementById('deposit-amount');
+      const val = parseFloat(amountInput.value);
+
+      if (isNaN(val) || val <= 0) {
+        showToast("Informe um valor de depósito válido maior que zero.", "error");
+        return;
+      }
+
+      document.getElementById('deposit-confirm-val').innerText = formatBRL(val);
+      document.getElementById('deposit-step-1').classList.add('hidden');
+      document.getElementById('deposit-step-2').classList.remove('hidden');
+      document.getElementById('deposit-pin').focus();
+    }
+
+    function backToDepositStep1() {
+      document.getElementById('deposit-step-2').classList.add('hidden');
+      document.getElementById('deposit-step-1').classList.remove('hidden');
+    }
+
+    function executeDeposit() {
+      const pinInput = document.getElementById('deposit-pin');
+      const pin = pinInput.value.trim();
+      const amount = parseFloat(document.getElementById('deposit-amount').value);
+
+      if (pin !== CORRECT_PIN) {
+        showToast("Senha incorreta.", "error");
+        pinInput.value = '';
+        pinInput.focus();
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        showToast("Valor de depósito inválido.", "error");
+        return;
+      }
+
+      // Perform Deposit
+      state.balance += amount;
+
+      // Record Transaction
+      const transaction = {
+        id: Date.now(),
+        type: 'Depósito',
+        amount: amount,
+        formattedDate: getCurrentFormattedDate()
+      };
+
+      state.history.push(transaction);
+
+      // Save & Update
+      saveState();
+      renderApp();
+
+      closeModal('deposit-modal');
+      showToast("Depósito realizado com sucesso!", "success");
+    }
+
+    /* ==========================================================================
+       WITHDRAWAL SYSTEM LOGIC
+       ========================================================================== */
+    function openWithdrawModal() {
+      document.getElementById('withdraw-amount').value = '';
+      document.getElementById('withdraw-pin').value = '';
+      document.getElementById('withdraw-available-balance').innerText = formatBRL(state.balance);
+      backToWithdrawStep1();
+      openModal('withdraw-modal');
+    }
+
+    function setMaxWithdrawAmount() {
+      document.getElementById('withdraw-amount').value = state.balance.toFixed(2);
+    }
+
+    function goToWithdrawPinStep() {
+      const amountInput = document.getElementById('withdraw-amount');
+      const val = parseFloat(amountInput.value);
+
+      if (isNaN(val) || val <= 0) {
+        showToast("Informe um valor de retirada válido.", "error");
+        return;
+      }
+
+      if (val > state.balance) {
+        showToast("Saldo insuficiente.", "error");
+        return;
+      }
+
+      document.getElementById('withdraw-confirm-val').innerText = formatBRL(val);
+      document.getElementById('withdraw-step-1').classList.add('hidden');
+      document.getElementById('withdraw-step-2').classList.remove('hidden');
+      document.getElementById('withdraw-pin').focus();
+    }
+
+    function backToWithdrawStep1() {
+      document.getElementById('withdraw-step-2').classList.add('hidden');
+      document.getElementById('withdraw-step-1').classList.remove('hidden');
+    }
+
+    function executeWithdraw() {
+      const pinInput = document.getElementById('withdraw-pin');
+      const pin = pinInput.value.trim();
+      const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+      if (pin !== CORRECT_PIN) {
+        showToast("Senha incorreta.", "error");
+        pinInput.value = '';
+        pinInput.focus();
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        showToast("Valor de retirada inválido.", "error");
+        return;
+      }
